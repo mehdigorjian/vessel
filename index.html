@@ -14,11 +14,36 @@
     <style>
       html, body { height: 100%; margin: 0; background: #111; }
       model-viewer { width: 100%; height: 100%; }
-      .info-panel {
+      .top-left {
         position: fixed;
         top: 16px;
         left: 16px;
-        max-width: 420px;
+        z-index: 12;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .scene-title {
+        padding: 8px 10px;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.55);
+        color: #fff;
+        border: 1px solid rgba(255,255,255,0.15);
+        box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        font-size: 13px;
+        line-height: 1.1;
+        user-select: none;
+      }
+      .info-panel {
+        position: fixed;
+        top: 60px;
+        left: 16px;
+        z-index: 11;
+        width: min(620px, calc(100vw - 32px));
+        max-height: calc(100vh - 32px);
+        overflow: auto;
         padding: 14px 16px;
         border-radius: 12px;
         background: rgba(0,0,0,0.55);
@@ -39,6 +64,23 @@
         line-height: 1.5;
         color: #dcdcdc;
       }
+      .info-panel .img {
+        width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.12);
+        margin: 10px 0 12px 0;
+        background: rgba(255,255,255,0.06);
+      }
+      .info-panel ol {
+        margin: 10px 0 0 18px;
+        padding: 0;
+        color: #dcdcdc;
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .info-panel li { margin: 6px 0; }
       .help-panel {
         position: fixed;
         left: 16px;
@@ -102,12 +144,30 @@
     </style>
   </head>
   <body>
-    <div class="info-panel">
+    <div class="top-left">
+      <div class="scene-title" aria-label="Scene title">Falciform Ligament Line (FLL)</div>
+      <button id="info-toggle" class="btn" type="button" aria-controls="info-panel" aria-expanded="false">Info</button>
+    </div>
+    <div id="info-panel" class="info-panel" role="dialog" aria-label="FLL info" hidden>
       <h1>Falciform Ligament Line (FLL)</h1>
-      <p>
-        Explore a high-quality 3D scan of the falciform ligament line. Inspect anatomical
-        features from every angle and adjust lighting via your device's renderer.
+      <img id="info-image" class="img" src="./fll-labels.jpg" alt="FLL diagram with labels" loading="lazy" />
+      <p id="info-image-fallback" hidden>
+        (Add the diagram image as <strong>fll-labels.jpg</strong> next to this page to display it here.)
       </p>
+      <p>
+        If we draw a line tangential to falciform ligament at the transition of the intraorbital to intracranial optic nerve, this line will cross the following from medial to lateral:
+      </p>
+      <ol>
+        <li>Distal dural ring (DDR)</li>
+        <li>Ophthalmic artery (A) (distal to DDR)</li>
+        <li>Posterior wall of clinoidal segment (Clin. Seg.) of ICA</li>
+        <li>Proximal dural ring (PDR)</li>
+        <li>The point where CN IV begins crossing over CN III at superior orbital fissure (SOF).</li>
+        <li>FLL is just anterior to ILT and CN VI which can be located lateral to ILT;</li>
+      </ol>
+      <div class="actions">
+        <button id="info-close" class="btn" type="button">Close</button>
+      </div>
     </div>
     <model-viewer
       src="./vessel-3.glb?v=2026-02-15"
@@ -139,6 +199,29 @@
       const toggleBtn = document.getElementById('toggle-rotate');
       const resetBtn = document.getElementById('reset-view');
       const status = document.getElementById('status');
+      const infoToggle = document.getElementById('info-toggle');
+      const infoPanel = document.getElementById('info-panel');
+      const infoClose = document.getElementById('info-close');
+      const infoImage = document.getElementById('info-image');
+      const infoImageFallback = document.getElementById('info-image-fallback');
+
+      function setInfoOpen(open) {
+        infoPanel.hidden = !open;
+        infoToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        infoToggle.textContent = open ? 'Hide Info' : 'Info';
+      }
+
+      infoToggle.addEventListener('click', () => {
+        setInfoOpen(infoPanel.hidden);
+      });
+      infoClose.addEventListener('click', () => setInfoOpen(false));
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') setInfoOpen(false);
+      });
+      infoImage.addEventListener('error', () => {
+        infoImage.hidden = true;
+        infoImageFallback.hidden = false;
+      });
 
       function setStatus(text) {
         status.style.display = '';
