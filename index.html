@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>3D Model</title>
+    <script type="module"
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+    </script>
+    <style>
+      html, body { height: 100%; margin: 0; background: #111; }
+      model-viewer { width: 100%; height: 100%; }
+      .info-panel {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        max-width: 420px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: rgba(0,0,0,0.55);
+        color: #eaeaea;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+      .info-panel h1 {
+        margin: 0 0 8px 0;
+        font-size: 18px;
+        line-height: 1.3;
+        color: #fff;
+      }
+      .info-panel p {
+        margin: 0;
+        font-size: 14px;
+        line-height: 1.5;
+        color: #dcdcdc;
+      }
+      .help-panel {
+        position: fixed;
+        left: 16px;
+        bottom: 16px;
+        max-width: 460px;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: rgba(0,0,0,0.55);
+        color: #eaeaea;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+      }
+      .help-panel .row {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 6px 0;
+        font-size: 13px;
+      }
+      .kbd {
+        display: inline-block;
+        padding: 2px 6px;
+        border-radius: 6px;
+        border: 1px solid rgba(255,255,255,0.18);
+        background: rgba(255,255,255,0.08);
+        color: #fff;
+        font-size: 12px;
+      }
+      .actions {
+        margin-top: 10px;
+        display: flex;
+        gap: 8px;
+      }
+      .btn {
+        cursor: pointer;
+        padding: 8px 10px;
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.15);
+        background: rgba(255,255,255,0.1);
+        color: #fff;
+        font-size: 13px;
+        transition: background 0.2s ease, transform 0.05s ease;
+      }
+      .btn:hover { background: rgba(255,255,255,0.18); }
+      .btn:active { transform: translateY(1px); }
+    </style>
+  </head>
+  <body>
+    <div class="info-panel">
+      <h1>Human Skull — 3D Exploration</h1>
+      <p>
+        Explore a high-quality 3D scan of a human skull. Inspect anatomical
+        features from every angle and adjust lighting via your device's renderer.
+      </p>
+    </div>
+    <model-viewer
+      src="./skull-1.glb"
+      camera-controls
+      auto-rotate
+      rotation-per-second="20deg"
+      environment-image="neutral"
+      shadow-intensity="0.8"
+      exposure="1.0"
+      alt="3D model">
+    </model-viewer>
+    <div class="help-panel" aria-live="polite" aria-label="Interaction help">
+      <div class="row"><span class="kbd">Drag</span> Rotate the skull</div>
+      <div class="row"><span class="kbd">Scroll / Pinch</span> Zoom in/out</div>
+      <div class="row"><span class="kbd">Shift + Drag</span> Pan the view</div>
+      <div class="row"><span class="kbd">Double‑click / Double‑tap</span> Focus on a point</div>
+      <div class="actions">
+        <button id="toggle-rotate" class="btn" type="button">Pause Auto‑Rotate</button>
+        <button id="reset-view" class="btn" type="button">Reset View</button>
+      </div>
+    </div>
+
+    <script>
+      const mv = document.querySelector('model-viewer');
+      const toggleBtn = document.getElementById('toggle-rotate');
+      const resetBtn = document.getElementById('reset-view');
+
+      function updateToggleLabel() {
+        const isAuto = mv.hasAttribute('auto-rotate');
+        toggleBtn.textContent = isAuto ? 'Pause Auto‑Rotate' : 'Resume Auto‑Rotate';
+      }
+
+      toggleBtn.addEventListener('click', () => {
+        if (mv.hasAttribute('auto-rotate')) {
+          mv.removeAttribute('auto-rotate');
+        } else {
+          mv.setAttribute('auto-rotate', '');
+        }
+        updateToggleLabel();
+      });
+
+      resetBtn.addEventListener('click', () => {
+        // Reset camera orbit & field-of-view to defaults
+        mv.cameraOrbit = '';
+        mv.fieldOfView = '';
+        // Briefly enable auto-rotate to settle, then revert to current state
+        const hadAuto = mv.hasAttribute('auto-rotate');
+        mv.setAttribute('auto-rotate', '');
+        setTimeout(() => {
+          if (!hadAuto) mv.removeAttribute('auto-rotate');
+          updateToggleLabel();
+        }, 500);
+      });
+
+      // Initialize labels to current state
+      updateToggleLabel();
+    </script>
+  </body>
+</html>
