@@ -4,8 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>3D Model</title>
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <script type="module"
       src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js">
+    </script>
+    <script nomodule
+      src="https://unpkg.com/@google/model-viewer/dist/model-viewer-legacy.js">
     </script>
     <style>
       html, body { height: 100%; margin: 0; background: #111; }
@@ -81,6 +85,20 @@
       }
       .btn:hover { background: rgba(255,255,255,0.18); }
       .btn:active { transform: translateY(1px); }
+      .status-panel {
+        position: fixed;
+        top: 16px;
+        right: 16px;
+        max-width: 320px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        background: rgba(0,0,0,0.55);
+        color: #eaeaea;
+        box-shadow: 0 6px 24px rgba(0,0,0,0.35);
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+        font-size: 13px;
+      }
     </style>
   </head>
   <body>
@@ -92,15 +110,19 @@
       </p>
     </div>
     <model-viewer
-      src="./skull-1.glb"
+      src="./vessel-1.glb"
       camera-controls
       auto-rotate
       rotation-per-second="20deg"
+      bounds="tight"
+      loading="eager"
+      poster="./poster.svg"
       environment-image="neutral"
       shadow-intensity="0.8"
       exposure="1.0"
       alt="3D model">
     </model-viewer>
+    <div id="status" class="status-panel" role="status" aria-live="polite">Loading model…</div>
     <div class="help-panel" aria-live="polite" aria-label="Interaction help">
       <div class="row"><span class="kbd">Drag</span> Rotate the skull</div>
       <div class="row"><span class="kbd">Scroll / Pinch</span> Zoom in/out</div>
@@ -116,6 +138,7 @@
       const mv = document.querySelector('model-viewer');
       const toggleBtn = document.getElementById('toggle-rotate');
       const resetBtn = document.getElementById('reset-view');
+      const status = document.getElementById('status');
 
       function updateToggleLabel() {
         const isAuto = mv.hasAttribute('auto-rotate');
@@ -146,6 +169,21 @@
 
       // Initialize labels to current state
       updateToggleLabel();
+
+      // Model-Viewer load and error instrumentation
+      mv.addEventListener('load', () => {
+        status.textContent = 'Model loaded';
+        setTimeout(() => { status.style.display = 'none'; }, 1200);
+      });
+      mv.addEventListener('error', (e) => {
+        const msg = (e?.detail && e.detail.message) ? e.detail.message : 'Failed to load model';
+        status.textContent = `Error: ${msg}`;
+        console.error('[model-viewer] error:', e);
+      });
+      // Basic capability check
+      if (!('WebGLRenderingContext' in window)) {
+        status.textContent = 'WebGL not supported on this device/browser';
+      }
     </script>
   </body>
 </html>
