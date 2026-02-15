@@ -103,14 +103,14 @@
   </head>
   <body>
     <div class="info-panel">
-      <h1>Human Skull — 3D Exploration</h1>
+      <h1>Falciform Ligament Line (FLL)</h1>
       <p>
-        Explore a high-quality 3D scan of a human skull. Inspect anatomical
+        Explore a high-quality 3D scan of the falciform ligament line. Inspect anatomical
         features from every angle and adjust lighting via your device's renderer.
       </p>
     </div>
     <model-viewer
-      src="./vessel-3.glb"
+      src="./vessel-3.glb?v=2026-02-15"
       camera-controls
       auto-rotate
       rotation-per-second="20deg"
@@ -158,18 +158,42 @@
         }
       }, 2000);
 
-      // Proactively check that the GLB URL is reachable (common issue on GitHub Pages).
+      // Proactively check that the GLB URL is reachable (common issue on GitHub Pages)
+      // and surface the resolved URL + response headers.
       try {
         const modelUrl = new URL(mv.getAttribute('src'), window.location.href);
+        setStatus(`Loading model…\n${modelUrl.href}`);
+
+        const showResponseInfo = (r) => {
+          // Some hosts omit Content-Length; still useful when present.
+          const ct = r.headers.get('content-type') || 'unknown content-type';
+          const cl = r.headers.get('content-length');
+          const extra = cl ? ` (${cl} bytes)` : '';
+          setStatus(`Loading model…\n${modelUrl.href}\n${ct}${extra}`);
+        };
+
         fetch(modelUrl, { method: 'HEAD', cache: 'no-store' })
           .then((r) => {
             if (!r.ok) {
               setStatus(`Model file not reachable: ${r.status} ${r.statusText}`);
               return;
             }
+
+            showResponseInfo(r);
           })
           .catch(() => {
-            // Ignore: some servers don’t allow HEAD, or file:// cases.
+            // Some servers don’t allow HEAD; fall back to GET to confirm reachability.
+            fetch(modelUrl, { method: 'GET', cache: 'no-store' })
+              .then((r) => {
+                if (!r.ok) {
+                  setStatus(`Model file not reachable: ${r.status} ${r.statusText}`);
+                  return;
+                }
+                showResponseInfo(r);
+              })
+              .catch(() => {
+                // Ignore: file:// cases or fetch blocked.
+              });
           });
       } catch {
         // Ignore URL parsing errors.
