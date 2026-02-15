@@ -110,7 +110,7 @@
       </p>
     </div>
     <model-viewer
-      src="./vessel-1.glb"
+      src="./untitled2.stl"
       camera-controls
       auto-rotate
       rotation-per-second="20deg"
@@ -139,6 +139,41 @@
       const toggleBtn = document.getElementById('toggle-rotate');
       const resetBtn = document.getElementById('reset-view');
       const status = document.getElementById('status');
+
+      function setStatus(text) {
+        status.style.display = '';
+        status.textContent = text;
+      }
+
+      // If someone opened the file directly (file://), module scripts and fetches
+      // often fail on mobile/desktop browsers. Always serve over http(s).
+      if (window.location.protocol === 'file:') {
+        setStatus('Open this page via http(s) (not file://). Start a server like: python3 -m http.server');
+      }
+
+      // Help debug cases where model-viewer fails to register (script blocked/offline/CSP).
+      window.setTimeout(() => {
+        if (!customElements.get('model-viewer')) {
+          setStatus('model-viewer script failed to load (check network/CSP).');
+        }
+      }, 2000);
+
+      // Proactively check that the GLB URL is reachable (common issue on GitHub Pages).
+      try {
+        const modelUrl = new URL(mv.getAttribute('src'), window.location.href);
+        fetch(modelUrl, { method: 'HEAD', cache: 'no-store' })
+          .then((r) => {
+            if (!r.ok) {
+              setStatus(`Model file not reachable: ${r.status} ${r.statusText}`);
+              return;
+            }
+          })
+          .catch(() => {
+            // Ignore: some servers don’t allow HEAD, or file:// cases.
+          });
+      } catch {
+        // Ignore URL parsing errors.
+      }
 
       function updateToggleLabel() {
         const isAuto = mv.hasAttribute('auto-rotate');
@@ -171,18 +206,22 @@
       updateToggleLabel();
 
       // Model-Viewer load and error instrumentation
+      mv.addEventListener('progress', (e) => {
+        const p = Math.round((e?.detail?.totalProgress ?? 0) * 100);
+        if (p > 0 && p < 100) setStatus(`Loading model… ${p}%`);
+      });
       mv.addEventListener('load', () => {
-        status.textContent = 'Model loaded';
+        setStatus('Model loaded');
         setTimeout(() => { status.style.display = 'none'; }, 1200);
       });
       mv.addEventListener('error', (e) => {
         const msg = (e?.detail && e.detail.message) ? e.detail.message : 'Failed to load model';
-        status.textContent = `Error: ${msg}`;
+        setStatus(`Error: ${msg}`);
         console.error('[model-viewer] error:', e);
       });
       // Basic capability check
       if (!('WebGLRenderingContext' in window)) {
-        status.textContent = 'WebGL not supported on this device/browser';
+        setStatus('WebGL not supported on this device/browser');
       }
     </script>
   </body>
